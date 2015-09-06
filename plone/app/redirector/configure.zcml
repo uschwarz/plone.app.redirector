@@ -15,4 +15,16 @@
 
     <include package="." file="events.zcml" />
 
+    <!-- 
+       An administrative view to show (and edit)
+       the existing redirections
+      -->
+    <browser:page
+       name="frobnicate_redirects"
+       for="*"
+       class=".browser.FrobnicateView"
+       template="templates/frob-redirects.pt"
+       permission="cmf.ManagePortal"
+       />
+
 </configure>

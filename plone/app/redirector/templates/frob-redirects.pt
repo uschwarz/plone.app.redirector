@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en"
+      xmlns:tal="http://xml.zope.org/namespaces/tal"
+      xmlns:metal="http://xml.zope.org/namespaces/metal"
+      xmlns:i18n="http://xml.zope.org/namespaces/i18n"
+      lang="en"
+      metal:use-macro="context/main_template/macros/master"
+      i18n:domain="plone"
+      >
+<body>  
+  <metal:title fill-slot="content-title">
+    <h1 class="documentFirstHeading"
+        >Frobnicate redirections
+    </h1>
+  </metal:title>
+
+  <metal:desc fill-slot="content-description">
+    <div class="documentDescription">
+      <p>
+      This page lists all redirections known to
+      plone.app.redirector. These are used to find pages that don't
+      exist at the location that was asked for anymore.
+      </p><p>
+      You can select one or more locations to remove those redirects;
+      you can also add redirects.
+      </p>
+    </div>
+  </metal:desc>
+
+  <metal:content-core fill-slot="content-core">
+    <metal:content-core
+       define-macro="content-core"
+       >
+      <style>
+	table.redirections {
+  	  vertical-align: top;
+	  table-layout:fixed;
+	}
+	table.redirections td {
+  	  vertical-align: top;
+	font-family: monospace;
+	width: 50%;
+	overflow:scroll;
+	}
+	table.redirections td select{
+	width:100%;
+	overflow:scroll;
+	}
+	</style>
+      <form method="POST"
+	    tal:define="redirs view/redirections"
+	    >
+	<table class="redirections">
+	  <colgroup>
+	    <col width="50%" />
+	    <col width="50%" />
+	  </colgroup>
+	  <thead>
+	    <tr>
+	      <th>Current location</th>
+	      <th>Previously known at</th>
+	    </tr>
+	  </thead>
+	  <tbody>
+	    <tr>
+	      <td><input style="width:80%;" name="tolocation" placeholder="current path" /></td>
+	      <td><input style="width:80%;" name="fromlocation" placeholder="previous path" /></td>
+	    </tr>
+	  </tbody>
+	  <tbody
+		 style="max-height: 40em;overflow:scroll;"
+		 >
+	    <tr tal:repeat="redir redirs">
+	      <td style="width:50% !important;"><span tal:replace="redir"></span></td>
+	      <td style="width:50% !important;">
+		<select multiple="multiple"
+			tal:attributes="name python:redir.encode('base64')[:-1]"
+			>
+		  <option tal:repeat="alias python:redirs[redir]"
+			  tal:attributes="value python:alias.encode('base64')[:-1]"
+			  tal:content="alias"></option>
+		</select>
+	      </td>
+	    </tr>
+	  </tbody>
+	</table>
+	<input type="hidden" name="rkeys"
+	       tal:attributes="value python: ','.join([ k.encode('base64')[:-1] for k in redirs]);"
+	       />
+	<input type="submit" />
+      </form>
+    </metal:content-core>
+  </metal:content-core>
+</body>
+</html>

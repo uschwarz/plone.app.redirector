@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import urlparse
 from urllib import unquote
 from urllib import quote
@@ -201,3 +203,68 @@ class FourOhFourView(BrowserView):
             return None
 
         return path.split('/')
+
+from Products.statusmessages.interfaces import IStatusMessage
+import binascii
+
+class FrobnicateView(BrowserView):
+
+    def __call__(self):
+            
+        if self.request['REQUEST_METHOD'] == 'POST':
+            self.frobnicateRedirections()
+        else:
+            # look at template or whatever:
+            return super(FrobnicateView, self).__call__()
+
+    
+    def redirections(self):
+        
+        storage = queryUtility(IRedirectionStorage)
+        if storage is None:
+            return dict()
+
+        return dict(storage._rpaths)
+
+    def frobnicateRedirections(self):
+        # step 1: maybe add a redirection
+        messages = IStatusMessage(self.request)
+        context = self.context
+        form = self.request.form
+
+        self.request.response.redirect(self.request['URL'])
+
+        storage = queryUtility(IRedirectionStorage)
+
+        if storage is None:
+            messages.add(u"No storage found", type='error')
+            self.request.response.redirect(self.request['URL'])
+            return
+
+        src = form.get('fromlocation')
+        dst = form.get('tolocation')
+
+        if src and dst:
+            storage.add(src, dst)
+            messages.add(u"Redirection added", type='info')
+
+        keys = form.get('rkeys')
+        successes = 0;
+        for k in keys.split(','):
+            vs =  form.get(k)
+            if vs:
+                if isinstance(vs, basestring):
+                    vs = [vs,]
+                    for v in vs:
+                        try:
+                            path = (v+'\n').decode('base64')
+                        except binascii.Error:
+                            messages.add(u"Ignored malformed key", type='error')
+                            continue
+                        if storage.has_path(path):
+                            storage.remove(path)
+                            successes += 1
+                        else:
+                            messages.add(u"Path does not exist: %s" % (path,), type='error')
+        if successes > 0:
+            messages.add(u"Removed %s redirections" % (successes,), type='info')
